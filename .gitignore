@@ -1,0 +1,61 @@
+# =========================
+# 🔐 Secrets
+# =========================
+apikey.txt
+.env
+.env.*
+
+# =========================
+# 🐍 Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# 🧪 Virtual environments
+# =========================
+.venv/
+venv/
+
+# =========================
+# 🧠 PyCharm / IDE
+# =========================
+.idea/
+*.iml
+
+# =========================
+# 📦 Generated outputs
+# =========================
+classificationOut/
+extractionOut/
+extractionOutStyle/
+files/
+files-out/
+files_images/
+files_style/
+output/
+SORTIES/
+
+# =========================
+# 📄 PDF source (keep folder only)
+# =========================
+PdfSource/*
+!PdfSource/.gitkeep
+
+# =========================
+# 🧠 ML models (if heavy)
+# =========================
+models/
+
+# =========================
+# 🖥 OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+
+classification/modeles/
+classification/*.tsv
+classification/*.txt
+
