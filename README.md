@@ -74,7 +74,11 @@ VOTRE_CLE_API
 
 ## 🧠 Modèle YOLO (détection d’exercices)
 
-Télécharger le poids `.pt` et le placer dans :
+Télécharger le poids `.pt` :
+
+👉 [Télécharger le modèle YOLO (.pt)](https://drive.google.com/drive/folders/1I8xB6XS3iYoFU2bB8pKe-9NcxuEufcet?usp=sharing)
+
+Puis placer le fichier dans :
 
 ```
 models/detImages/
@@ -84,7 +88,11 @@ models/detImages/
 
 ## 🏷 Modèle de classification (CamemBERT fine-tuned)
 
-Télécharger les poids du modèle et placer le contenu dans :
+Télécharger le dossier contenant les poids du modèle :
+
+👉 [Télécharger le dossier "modeles"](https://drive.google.com/drive/folders/1eKpaStQ5rY_PjtDGle3FjVsW_F8pIi1Y?usp=sharing)
+
+Puis placer le contenu dans :
 
 ```
 classification/
