@@ -1,9 +1,3 @@
-Voici la version corrigée, sans nom personnel et rédigée de manière totalement générale.
-
-Tu peux remplacer entièrement ton README par celui-ci 👇
-
----
-
 # 📚 MALIN – Extraction & Classification d’Exercices PDF
 
 Pipeline complet d’extraction et de classification automatique d’exercices scolaires à partir de PDF natifs.
