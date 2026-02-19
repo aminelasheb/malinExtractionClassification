@@ -1,210 +1,228 @@
-# extractionPipeline-TxtStyle
+Voici la version corrigée, sans nom personnel et rédigée de manière totalement générale.
 
-Version mise à jour du pipeline d'extraction MALIN avec **extraction texte + style** pour PDF natifs et **classification automatique**.
-
-<p align="center">
-<img src="pipeline.png" width="100%">
-</p>
-
-## Vue d’ensemble
-
-Pipeline complet d’extraction et de classification d’exercices à partir de PDF scolaires :
-
-* **Ghostscript** — Conversion PDF → images
-* **YOLOv11x** — Détection des exercices / illustrations
-* **OpenCV** — Annotation (dessin des boîtes) et découpe (crops)
-* **PyMuPDF / PDFMiner** — Extraction du texte et du style (gras, couleur, etc.)
-* **Gemini Vision (2.5 Flash)** — Structuration des exercices (Enoncé, Consigne, Conseils, etc.)
-* **Traitement de texte** — Nettoyage automatique des caractères spéciaux (THSB, NNBSP)
-* **CamemBERT** — Classification des exercices par typologie (Associe, QCM, Vrai/Faux...)
-* **Post-processing** — Rangement automatique des sorties par catégorie.
-
-## Pourquoi ajouter le style ?
-
-Certains exercices utilisent des **mots stylés** (couleur, gras, italique…) au sein d’un bloc de texte au style uniforme.
-Pour les distinguer correctement, nous avons ajouté une étape **Text/Style Map**.
-
-En ajoutant cette étape, on a constaté que **l’extraction globale s’améliore nettement**.
+Tu peux remplacer entièrement ton README par celui-ci 👇
 
 ---
 
-## Pré-requis
+# 📚 MALIN – Extraction & Classification d’Exercices PDF
 
-**1. Environnement Python (3.9 recommandé)**
+Pipeline complet d’extraction et de classification automatique d’exercices scolaires à partir de PDF natifs.
+
+Le projet permet :
+
+* 🔎 Détection des zones d’exercices
+* 📝 Extraction du texte (avec ou sans style)
+* 🧠 Structuration automatique en JSON
+* 🏷 Classification par typologie d’exercice
+* 📂 Organisation automatique des sorties
+
+---
+
+# 1️⃣ Guide d’installation
+
+## 🔧 Dépendances système
+
+### Installer Ghostscript
+
+Ghostscript est nécessaire pour la conversion **PDF → images**.
+
+Télécharger et installer :
+[https://ghostscript.com/](https://ghostscript.com/)
+
+Vérifier l’installation :
 
 ```bash
-python-3.9.13-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+gswin64c -v
+```
+
+---
+
+## 🐍 Environnement Python (3.9 recommandé)
+
+Installer Python 3.9.
+
+Créer un environnement virtuel :
+
+```bash
 py -3.9 -m venv venv39
 venv39\Scripts\activate
+```
+
+Installer les dépendances :
+
+```bash
 pip install -r requirements.txt
-
-```
-
-**2. Dépendances externes & Modèles**
-
-* **Ghostscript** installé sur la machine (nécessaire pour PDF → images).
-* **Clé API Gemini** → Créer un fichier `apikey.txt` à la racine contenant uniquement la clé.
-* **Poids YOLOv11x** (`.pt`) → À placer dans `models/detImages/`. [Lien de téléchargement]().
-* **Dossier source** → Créer un dossier `PdfSource/` à la racine et y glisser vos fichiers PDF.
-
----
-
-## Utilisation (Ligne de commande)
-
-Le pipeline se lance désormais entièrement via des arguments en ligne de commande depuis `main.py`. Plus besoin de modifier le code source pour changer de page !
-
-### Syntaxe générale :
-
-```bash
-python main.py <nom_du_pdf.pdf> [--all] [--first N] [--last N] [--style true/false]
-python main.py MagnardCE22025.pdf --first 7 --last 7
-
-```
-
-### Exemples :
-
-**1. Tester sur quelques pages (ex: pages 9 à 10) sans style :**
-
-```bash
-python main.py manual_CE1_FRANCAIS_MAGNARD.pdf --first 9 --last 10
-
-```
-
-**2. Tester sur quelques pages AVEC l'extraction du style (Gras, couleurs) :**
-
-```bash
-python main.py manual_CE1_FRANCAIS_MAGNARD.pdf --first 9 --last 10 --style true
-
-```
-
-**3. Lancer sur TOUT le PDF :**
-
-```bash
-python main.py manual_CE1_FRANCAIS_MAGNARD.pdf --all
-
 ```
 
 ---
 
-## Sorties & Arborescence
+## 🔐 Clé API Gemini
 
-À la fin de l'exécution, un dossier **`OUTPUTS/<nom_du_pdf>/`** est généré automatiquement. Il est structuré de manière optimale pour une utilisation directe :
+Créer un fichier :
 
-```text
-OUTPUTS/manual_CE1_FRANCAIS_MAGNARD.pdf/
-├── Extraction/                 # Un fichier .json par page contenant tous les exercices
-│   ├── page_9.json
-│   └── page_10.json
-├── Images/                     # Les crops (découpes) des illustrations détectées par YOLO
-│   ├── page_9_c0.png
-│   └── ...
-└── Classification/             # Exercices séparés 1 par 1 et triés dans des dossiers par type
-    ├── ClasseCM/
-    │   └── p10_ex1.json
-    ├── CochePhrase/
-    │   └── p10_cherchons.json
-    ├── EditPhrase/
-    │   └── p9_ex4.json
-    └── ...
+```
+apikey.txt
+```
 
+à la racine du projet contenant uniquement :
+
+```
+VOTRE_CLE_API
 ```
 
 ---
 
-## Formats JSON (Style vs Sans Style)
+## 🧠 Modèle YOLO (détection d’exercices)
 
-Possibilité d'avoir **deux formats JSON** de sortie (via le paramètre `--style`) :
+Télécharger le poids `.pt` et le placer dans :
 
-### 1. JSON **avec style** (`--style true`)
-
-* Préserve la mise en forme LaTeX : `\bf{}`, `\it{}`, `\color{"txt",#HEX}`
-* Références images : `\image{id}`
-* Utilisé quand la mise en forme (ex: mots en gras à identifier) contient une information importante.
-
-### 2. JSON **sans style** (`--style false` par défaut)
-
-* Texte simplifié, brut, sans balises de formatage.
-* Images référencées avec `\image{id}`.
-* Préféré pour les traitements simples où le style visuel n'a pas d'impact sur la consigne.
+```
+models/detImages/
+```
 
 ---
 
-## Schéma JSON
+## 🏷 Modèle de classification (CamemBERT fine-tuned)
+
+Télécharger les poids du modèle et placer le contenu dans :
+
+```
+classification/
+```
+
+---
+
+## 📂 Dossier source PDF
+
+Créer un dossier à la racine :
+
+```
+PdfSource/
+```
+
+Y placer les PDF à traiter.
+
+---
+
+# 2️⃣ Guide d’utilisation
+
+## ▶ Lancement du pipeline
+
+Syntaxe générale :
+
+```bash
+python main.py <nom_du_pdf.pdf> [--all] [--first N] [--last N]
+```
+
+Exemple :
+
+```bash
+python main.py document.pdf --first 7 --last 10
+```
+
+---
+
+## 🔎 Exemples
+
+### Tester sur quelques pages
+
+```bash
+python main.py document.pdf --first 9 --last 10
+```
+
+### Lancer sur tout le PDF
+
+```bash
+python main.py document.pdf --all
+```
+
+---
+
+# 📁 Sorties & Arborescence
+
+À la fin de l'exécution, un dossier est généré automatiquement :
+
+```
+SORTIES/<nom_du_pdf>/
+```
+
+Exemple :
+
+```
+SORTIES/document/
+│
+├── Extraction_exercices/
+├── Extraction_exercices --style/
+├── CategorisationExercices/
+└── CategorisationExercices --style/
+```
+
+---
+
+## 📄 Extraction
+
+Contient un fichier JSON par page :
+
+```
+Extraction_exercices/
+    page_7.json
+```
+
+---
+
+## 🎨 Extraction avec style
+
+Le dossier :
+
+```
+Extraction_exercices --style/
+```
+
+Préserve la mise en forme LaTeX :
+
+* Gras : `\bf{}`
+* Italique : `\it{}`
+* Couleur : `\color{"txt",#HEX}`
+* Images : `\image{id}`
+
+---
+
+## 🏷 Classification
+
+Les exercices sont ensuite séparés et triés automatiquement :
+
+```
+CategorisationExercices --style/
+    CM/
+        P9Ex11.json
+        P9Ex5.json
+        P9Ex6.json
+```
+
+Chaque dossier correspond à une typologie d’exercice.
+
+---
+
+# 📦 Format JSON
+
+Chaque page génère un tableau d’objets `Exercise`.
 
 ```json
-{
-  "$defs": {
-    "Exercise": {
-      "properties": {
-        "id": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "type": {
-          "const": "exercise",
-          "type": "string",
-          "default": "exercise"
-        },
-        "images": {
-          "type": "boolean",
-          "default": false
-        },
-        "image_type": {
-          "type": "string",
-          "enum": ["none", "single", "ordered", "unordered", "composite"],
-          "default": "none"
-        },
-        "properties": {
-          "$ref": "#/$defs/Properties",
-          "default": {
-            "number": null,
-            "instruction": null,
-            "labels": [],
-            "statement": null,
-            "hint": null,
-            "example": null,
-            "references": null
-          }
-        }
-      },
-      "type": "object"
-    },
-    "Properties": {
-      "properties": {
-        "number": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "instruction": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "labels": {
-          "type": "array",
-          "items": { "type": "string" },
-          "default": []
-        },
-        "statement": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "hint": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "example": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
-        "references": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        }
-      },
-      "type": "object"
+[
+  {
+    "id": "string | null",
+    "type": "exercise",
+    "images": true,
+    "image_type": "none | single | ordered | unordered | composite",
+    "properties": {
+      "number": "string | null",
+      "instruction": "string | null",
+      "labels": ["string"],
+      "statement": "string | null",
+      "hint": "string | null",
+      "example": "string | null",
+      "references": "string | null"
     }
-  },
-  "items": { "$ref": "#/$defs/Exercise" },
-  "type": "array"
-}
-
+  }
+]
+```
